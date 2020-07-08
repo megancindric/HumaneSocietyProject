@@ -163,31 +163,106 @@ namespace HumaneSociety
 
         //// TODO Items: ////
         
-        // TODO: Allow any of the CRUD operations to occur here
+        // TODO: Allow any of the Create(insert)Read(select)UpdateDelete operations to occur here
         internal static void RunEmployeeQueries(Employee employee, string crudOperation)
         {
-            throw new NotImplementedException();
+            //Switch case for all CRUD operations
+            switch(crudOperation)
+            {
+                case "Create":
+                    AddEmployee(employee);
+                    break;
+
+                case "Read":
+                    GetEmployeeByID(employee);
+                    break;
+
+                case "Update":
+                    UpdateEmployee(employee);
+                    break;
+
+                case "Delete":
+                    RemoveEmployee(employee);
+                    break;
+
+                default:
+                    Console.WriteLine("Not a valid query operation.  Please try your query again");
+                    break;
+            }
+             
         }
 
+        //Create employee
+        internal static void AddEmployee(Employee employee)
+        {
+            //Copied from Client update - let's double check this!
+            db.Employees.InsertOnSubmit(employee);
+            db.SubmitChanges();
+        }
+        //Read employee
+        internal static Employee GetEmployeeByID(Employee employee)
+        {
+            Employee employeeByID = db.Employees.Where(a => a.EmployeeId == employee.EmployeeId).FirstOrDefault();
+            return employeeByID;
+        }
+        //Update employee
+        internal static void UpdateEmployee(Employee employee)
+        {
+            Employee employeeFromDb = null;
+
+            try
+            {
+                employeeFromDb = db.Employees.Where(c => c.EmployeeId == employee.EmployeeId).Single();
+            }
+            catch (InvalidOperationException e)
+            {
+                Console.WriteLine("No employees have an EmployeeId that matches the Employee passed in.");
+                Console.WriteLine("No update have been made.");
+                return;
+            }
+
+            // update clientFromDb information with the values on clientWithUpdates (aside from address)
+            employeeFromDb.FirstName = employee.FirstName;
+            employeeFromDb.LastName = employee.LastName;
+            employeeFromDb.UserName = employee.UserName;
+            employeeFromDb.Password = employee.Password;
+            employeeFromDb.EmployeeNumber = employee.EmployeeNumber;
+            employeeFromDb.Email = employee.Email;
+
+            db.SubmitChanges();
+        }
+        //Delete employee
+        internal static void RemoveEmployee(Employee employee)
+        {
+            db.Employees.DeleteOnSubmit(employee);
+            db.SubmitChanges();
+        }
         // TODO: Animal CRUD Operations
         internal static void AddAnimal(Animal animal)
         {
-            throw new NotImplementedException();
+            //Copied from Client update - let's double check this!
+            db.Animals.InsertOnSubmit(animal);
+            db.SubmitChanges();
         }
 
         internal static Animal GetAnimalByID(int id)
         {
-            throw new NotImplementedException();
+            Animal animalByID = db.Animals.Where(a => a.AnimalId == id).FirstOrDefault();
+            return animalByID;  
         }
 
         internal static void UpdateAnimal(int animalId, Dictionary<int, string> updates)
         {            
-            throw new NotImplementedException();
+            //Where(m => m.animalId = animalId)
+                //What is the change that we're making here?  How does int, string relate to updates to make?
+       
+            db.SubmitChanges();
         }
 
         internal static void RemoveAnimal(Animal animal)
         {
-            throw new NotImplementedException();
+            db.Animals.DeleteOnSubmit(animal);
+            db.SubmitChanges();
         }
         
         // TODO: Animal Multi-Trait Search
@@ -199,7 +274,6 @@ namespace HumaneSociety
         // TODO: Misc Animal Things
         internal static int GetCategoryId(string categoryName)
         {
-            throw new NotImplementedException();
         }
         
         internal static Room GetRoom(int animalId)
