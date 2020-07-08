@@ -317,17 +317,50 @@ namespace HumaneSociety
         // TODO: Adoption CRUD Operations
         internal static void Adopt(Animal animal, Client client)
         {
-            throw new NotImplementedException();
+            Adoption animalAdoption = db.Adoptions.Where(a => a.AnimalId == animal.AnimalId && a.ClientId == client.ClientId).FirstOrDefault();
+            //Check if PaymentCollect is TRUE
+            //Check if ApprovalStatus == "Approved"
+
+
+            Animal animalFromDB = db.Animals.Where(b => b.AnimalId == animal.AnimalId).FirstOrDefault();
+            animalFromDB.AdoptionStatus = "Adopted";
+            db.SubmitChanges();
         }
 
-        internal static IQueryable<Adoption> GetPendingAdoptions()
+        internal static IEnumerable<Adoption> GetPendingAdoptions()  //We changed IQueryable to IEnumberable - is this okay?  CHECK WITH SENIOR DEVELOPER
         {
-            throw new NotImplementedException();
+            var animalsAndAdoptions = from a in db.Adoptions 
+                                      join b in db.Animals 
+                                      on a.AnimalId equals b.AnimalId
+                                      select new { a.AnimalId, b.AdoptionStatus };
+
+            //Now have table of AnimalId and AdoptionStatus of that animal
+            foreach (var pairvalue in animalsAndAdoptions)
+            {
+                if (pairvalue.AdoptionStatus != "Adopted")
+                {
+                    yield return db.Adoptions.Where(a => a.AnimalId == pairvalue.AnimalId).FirstOrDefault();
+                }
+            }
         }
 
         internal static void UpdateAdoption(bool isAdopted, Adoption adoption)
         {
-            throw new NotImplementedException();
+            Animal animalToUpdate = db.Animals.Where(b => b.AnimalId == adoption.AnimalId).Single();
+
+            if (isAdopted)
+            {
+                animalToUpdate.AdoptionStatus = "Adopted";
+                //Will need to change AdoptionStatus at that animal to Adopted
+            }
+
+            else
+            {
+                animalToUpdate.AdoptionStatus = "Not Adopted";
+                //Will need to change AdoptionStatus to NotAdopted
+            }
+
+            db.SubmitChanges();
         }
 
         internal static void RemoveAdoption(int animalId, int clientId)
