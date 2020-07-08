@@ -251,11 +251,33 @@ namespace HumaneSociety
             return animalByID;  
         }
 
-        internal static void UpdateAnimal(int animalId, Dictionary<int, string> updates)
-        {            
-            //Where(m => m.animalId = animalId)
-                //What is the change that we're making here?  How does int, string relate to updates to make?
-       
+        internal static void UpdateAnimal(Animal updatedAnimal)
+        {
+            Animal animalFromDb = null;
+
+            try
+            {
+                animalFromDb = db.Animals.Where(c => c.AnimalId == updatedAnimal.AnimalId).Single();
+            }
+            catch (InvalidOperationException e)
+            {
+                Console.WriteLine("No animals have an AnimalId that matches the ID passed in.");
+                Console.WriteLine("No updates have been made.");
+                return;
+            }
+
+            animalFromDb.Name = updatedAnimal.Name;
+            animalFromDb.Weight = updatedAnimal.Weight;
+            animalFromDb.Age = updatedAnimal.Age;
+            animalFromDb.Demeanor = updatedAnimal.Demeanor;
+            animalFromDb.KidFriendly = updatedAnimal.KidFriendly;
+            animalFromDb.PetFriendly = updatedAnimal.PetFriendly;
+            animalFromDb.Gender = updatedAnimal.Gender;
+            animalFromDb.AdoptionStatus = updatedAnimal.AdoptionStatus;
+            animalFromDb.CategoryId = updatedAnimal.CategoryId;
+            animalFromDb.DietPlanId = updatedAnimal.DietPlanId;
+            animalFromDb.EmployeeId = updatedAnimal.EmployeeId;
+
             db.SubmitChanges();
         }
 
@@ -274,8 +296,9 @@ namespace HumaneSociety
         // TODO: Misc Animal Things
         internal static int GetCategoryId(string categoryName)
         {
+            throw new NotImplementedException();
         }
-        
+
         internal static Room GetRoom(int animalId)
         {
             throw new NotImplementedException();
