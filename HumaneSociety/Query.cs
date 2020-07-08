@@ -82,8 +82,8 @@ namespace HumaneSociety
             }
             catch(InvalidOperationException e)
             {
-                Console.WriteLine("No clients have a ClientId that matches the Client passed in.");
-                Console.WriteLine("No update have been made.");
+                UserInterface.DisplayMessage("No clients have a ClientId that matches the Client passed in.");
+                UserInterface.DisplayMessage("No update have been made.");
                 return;
             }
             
@@ -186,7 +186,7 @@ namespace HumaneSociety
                     break;
 
                 default:
-                    Console.WriteLine("Not a valid query operation.  Please try your query again");
+                    UserInterface.DisplayMessage("Not a valid query operation.  Please try your query again");
                     break;
             }
              
@@ -216,8 +216,8 @@ namespace HumaneSociety
             }
             catch (InvalidOperationException e)
             {
-                Console.WriteLine("No employees have an EmployeeId that matches the Employee passed in.");
-                Console.WriteLine("No update have been made.");
+                UserInterface.DisplayMessage("No employees have an EmployeeId that matches the Employee passed in.");
+                UserInterface.DisplayMessage("No update have been made.");
                 return;
             }
 
@@ -240,7 +240,6 @@ namespace HumaneSociety
         // TODO: Animal CRUD Operations
         internal static void AddAnimal(Animal animal)
         {
-            //Copied from Client update - let's double check this!
             db.Animals.InsertOnSubmit(animal);
             db.SubmitChanges();
         }
@@ -261,8 +260,8 @@ namespace HumaneSociety
             }
             catch (InvalidOperationException e)
             {
-                Console.WriteLine("No animals have an AnimalId that matches the ID passed in.");
-                Console.WriteLine("No updates have been made.");
+                UserInterface.DisplayMessage("No animals have an AnimalId that matches the ID passed in.");
+                UserInterface.DisplayMessage("No updates have been made.");
                 return;
             }
 
@@ -290,9 +289,62 @@ namespace HumaneSociety
         // TODO: Animal Multi-Trait Search
             
             //Clarification on this method?
-        internal static IQueryable<Animal> SearchForAnimalsByMultipleTraits(Dictionary<int, string> updates) // parameter(s)?
+        internal static IQueryable<Animal> SearchForAnimalsByMultipleTraits(Dictionary<int, string> searchCriteria) // parameter(s)? **FOLLOW UP W/ SENIOR DEV ABOUT THIS ONE**
         {
-            throw new NotImplementedException();
+            var allAnimals = db.Animals;
+           
+            //Grab all animals from DB & store in var
+            foreach (var item in searchCriteria)
+            {
+                switch(item.Key)
+                {
+                    case 1: //Category
+                      allAnimals.Where(c => c.Category.Name == item.Value).FirstOrDefault();
+                      break;
+
+                    case 2: //Name
+                       allAnimals.Where(c => c.Name == item.Value).FirstOrDefault();
+                       break;
+
+                    case 3: //Age
+                        int ageInInt = Int32.Parse(item.Value);
+                        allAnimals.Where(c => c.Age == ageInInt).FirstOrDefault();
+                        break;
+
+                    case 4: //Demeanor
+                        allAnimals.Where(c => c.Demeanor == item.Value).FirstOrDefault();
+                        break;
+
+                    case 5: //Kid Friendly
+                        bool kidFriendly = UserInterface.YesNoToBool(item.Value);
+                        allAnimals.Where(c => c.KidFriendly == kidFriendly).FirstOrDefault();
+                        break;
+
+                    case 6: //Pet Friendly
+                        bool petFriendly = UserInterface.YesNoToBool(item.Value);
+                        allAnimals.Where(c => c.PetFriendly == petFriendly).FirstOrDefault();
+                        break;
+
+                    case 7: //Weight
+                        int weightInInt = Int32.Parse(item.Value);
+                        allAnimals.Where(c => c.Weight == weightInInt).FirstOrDefault();
+                        break;
+
+                    case 8: //ID
+                        int idInInt = Int32.Parse(item.Value);
+                        allAnimals.Where(c => c.AnimalId == idInInt).FirstOrDefault();
+                        break;
+
+                    default:
+                        UserInterface.DisplayMessage("Improper search parameters passed in.");
+                        UserInterface.DisplayMessage("Search was unsuccessful. Please try your search again");
+                        break;
+                }
+            }
+            //Switch case - will filter using what key is, and what category that corresponds to
+            //Will then convert to string (Age, Weight, ID)
+            //Return filtered IQueryable list of animals
+
         }
          
         // TODO: Misc Animal Things
@@ -317,17 +369,17 @@ namespace HumaneSociety
         // TODO: Adoption CRUD Operations
         internal static void Adopt(Animal animal, Client client)
         {
+            //Creation of Adoption (linking AnimalId and ClientId).  Will set AdoptionStatus to Pending, PaymentCollect to FALSE, Can hard code PaymentFee
             Adoption animalAdoption = db.Adoptions.Where(a => a.AnimalId == animal.AnimalId && a.ClientId == client.ClientId).FirstOrDefault();
-            //Check if PaymentCollect is TRUE
-            //Check if ApprovalStatus == "Approved"
+            
 
 
             Animal animalFromDB = db.Animals.Where(b => b.AnimalId == animal.AnimalId).FirstOrDefault();
-            animalFromDB.AdoptionStatus = "Adopted";
+            animalFromDB.AdoptionStatus = "Pending";
             db.SubmitChanges();
         }
 
-        internal static IEnumerable<Adoption> GetPendingAdoptions()  //We changed IQueryable to IEnumberable - is this okay?  CHECK WITH SENIOR DEVELOPER
+        internal static IQueryable<Adoption> GetPendingAdoptions()  //Instead of yield return, we will create a list of Adoptions where != "Adopted", then return this list
         {
             var animalsAndAdoptions = from a in db.Adoptions 
                                       join b in db.Animals 
@@ -337,15 +389,19 @@ namespace HumaneSociety
             //Now have table of AnimalId and AdoptionStatus of that animal
             foreach (var pairvalue in animalsAndAdoptions)
             {
-                if (pairvalue.AdoptionStatus != "Adopted")
+                if (pairvalue.AdoptionStatus == "Pending")
                 {
-                    yield return db.Adoptions.Where(a => a.AnimalId == pairvalue.AnimalId).FirstOrDefault();
+                    return db.Adoptions.Where(a => a.AnimalId == pairvalue.AnimalId).FirstOrDefault();
                 }
             }
         }
 
         internal static void UpdateAdoption(bool isAdopted, Adoption adoption)
         {
+            //Search DB for this particular adoption
+                //If isAdopted --> payment has been collected, adoption is approved, adoption status = "Adopted"
+                    //Otherwise we can mark as not adopted (will keep record of this adoption in DB)
+
             Animal animalToUpdate = db.Animals.Where(b => b.AnimalId == adoption.AnimalId).Single();
 
             if (isAdopted)
