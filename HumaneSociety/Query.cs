@@ -461,10 +461,10 @@ namespace HumaneSociety
 
         internal static void RemoveAdoption(int animalId, int clientId)
         {           
-            Adoption adoptionToRemove = null;
+            Adoption adoptionFromDb = null;
             try
             {
-                adoptionToRemove = db.Adoptions.Where(c => c.AnimalId == animalId && c.ClientId == clientId).Single();
+                adoptionFromDb = db.Adoptions.Where(c => c.AnimalId == animalId && c.ClientId == clientId).Single();
             }
             catch (InvalidOperationException e)
             {
@@ -472,19 +472,12 @@ namespace HumaneSociety
                 UserInterface.DisplayMessage("No updates have been made.");
                 return;
             }
-            Animal animalFromDb = null;
-            try
-            {
-                animalFromDb = db.Animals.Where(c => c.AnimalId == animalId).Single();
-            }
-            catch (InvalidOperationException e)
-            {
-                UserInterface.DisplayMessage("No animals have an AnimalId that matches the ID passed in.");
-                UserInterface.DisplayMessage("No updates have been made.");
-                return;
-            }
+            Animal animalFromDb = db.Animals.Where(c => c.AnimalId == animalId).Single();
+           
             animalFromDb.AdoptionStatus = "Not Adopted";
-            db.Adoptions.DeleteOnSubmit(adoptionToRemove);
+            adoptionFromDb.PaymentCollected = false;
+            adoptionFromDb.ApprovalStatus = "Not approved";
+            
             db.SubmitChanges();
         }
 
