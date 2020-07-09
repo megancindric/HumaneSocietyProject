@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -341,10 +342,8 @@ namespace HumaneSociety
                         break;
                 }
             }
-            //Switch case - will filter using what key is, and what category that corresponds to
-            //Will then convert to string (Age, Weight, ID)
-            //Return filtered IQueryable list of animals
 
+            return allAnimals;
         }
          
         // TODO: Misc Animal Things
@@ -372,50 +371,68 @@ namespace HumaneSociety
             //Creation of Adoption (linking AnimalId and ClientId).  Will set AdoptionStatus to Pending, PaymentCollect to FALSE, Can hard code PaymentFee
             Adoption animalAdoption = db.Adoptions.Where(a => a.AnimalId == animal.AnimalId && a.ClientId == client.ClientId).FirstOrDefault();
             
-
+            
 
             Animal animalFromDB = db.Animals.Where(b => b.AnimalId == animal.AnimalId).FirstOrDefault();
             animalFromDB.AdoptionStatus = "Pending";
             db.SubmitChanges();
         }
 
-        internal static IQueryable<Adoption> GetPendingAdoptions()  //Instead of yield return, we will create a list of Adoptions where != "Adopted", then return this list
+        internal static IQueryable<Adoption> GetPendingAdoptions()  //Instead of yield return, we will create a list of Adoptions where = "Pending", then return this list
         {
-            var animalsAndAdoptions = from a in db.Adoptions 
-                                      join b in db.Animals 
-                                      on a.AnimalId equals b.AnimalId
-                                      select new { a.AnimalId, b.AdoptionStatus };
+            var animalsPendingAdoption = db.Animals.Where(p => p.AdoptionStatus == "Pending").Select(a => a.AnimalId);
+            var listOfAdoptions = db.Adoptions;
+            var finalList;
+            //We now have a collection of all adoptions, and a collection of the ID's we need to pull from
+            //Can we join animalId's with list of adoptions, then simply select just "Adoptions" fromt that collection?
 
-            //Now have table of AnimalId and AdoptionStatus of that animal
-            foreach (var pairvalue in animalsAndAdoptions)
+            foreach (var animalID in animalsPendingAdoption)
             {
-                if (pairvalue.AdoptionStatus == "Pending")
-                {
-                    return db.Adoptions.Where(a => a.AnimalId == pairvalue.AnimalId).FirstOrDefault();
-                }
+                finalList.Add(listOfAdoptions.Where(a => a.AnimalId == animalID));
             }
+           
+            return finalList;
+                                                                                                                                       //START HERE THURSDAY
         }
 
         internal static void UpdateAdoption(bool isAdopted, Adoption adoption)
         {
             //Search DB for this particular adoption
-                //If isAdopted --> payment has been collected, adoption is approved, adoption status = "Adopted"
-                    //Otherwise we can mark as not adopted (will keep record of this adoption in DB)
-
-            Animal animalToUpdate = db.Animals.Where(b => b.AnimalId == adoption.AnimalId).Single();
-
+            Adoption adoptionFromDb = null;
+            Animal animalFromDb = null;
+            try
+            {
+                adoptionFromDb = db.Adoptions.Where(c => c.AnimalId == adoption.AnimalId).Single();
+            }
+            catch (InvalidOperationException e)
+            {
+                UserInterface.DisplayMessage("No adoption matches the ID passed in.");
+                UserInterface.DisplayMessage("No updates have been made.");
+                return;
+            }
+            try
+            {
+                animalFromDb = db.Animals.Where(c => c.AnimalId == adoption.AnimalId).Single();
+            }
+            catch (InvalidOperationException e)
+            {
+                UserInterface.DisplayMessage("No animals have an AnimalId that matches the ID passed in.");
+                UserInterface.DisplayMessage("No updates have been made.");
+                return;
+            }
+            //If isAdopted --> payment has been collected, adoption is approved, adoption status = "Adopted"
+            //Otherwise we can mark as not adopted (will keep record of this adoption in DB)
             if (isAdopted)
             {
-                animalToUpdate.AdoptionStatus = "Adopted";
+                animalFromDb.AdoptionStatus = "Adopted";
                 //Will need to change AdoptionStatus at that animal to Adopted
             }
 
             else
             {
-                animalToUpdate.AdoptionStatus = "Not Adopted";
+                animalFromDb.AdoptionStatus = "Not Adopted";
                 //Will need to change AdoptionStatus to NotAdopted
             }
-
             db.SubmitChanges();
         }
 
@@ -427,7 +444,22 @@ namespace HumaneSociety
         // TODO: Shots Stuff
         internal static IQueryable<AnimalShot> GetShots(Animal animal)
         {
-            throw new NotImplementedException();
+            Animal animalFromDb = null;
+
+            try
+            {
+                animalFromDb = db.Animals.Where(c => c.AnimalId == animal.AnimalId).Single();
+            }
+            catch (InvalidOperationException e)
+            {
+                UserInterface.DisplayMessage("No animals have an AnimalId that matches the ID passed in.");
+                UserInterface.DisplayMessage("No updates have been made.");
+                return null;
+            }
+
+            var listOfShots = db.AnimalShots.Where(s => s.AnimalId == animalFromDb.AnimalId);
+            return listOfShots;
+
         }
 
         internal static void UpdateShot(string shotName, Animal animal)

@@ -84,6 +84,11 @@ namespace HumaneSociety
             }
         }
 
+        public static void DisplayMessage(String message)
+        {
+            Console.WriteLine(message);
+        }
+
         internal static void DisplayAnimals(List<Animal> animals)
         {
             foreach(Animal animal in animals)
@@ -147,6 +152,18 @@ namespace HumaneSociety
             else
             {
                 return "no";
+            }
+        }
+
+        public static bool YesNoToBool(string input)
+        {
+            if(input == "yes")
+            {
+                return true;
+            }
+            else
+            {
+                return false;
             }
         }
 
