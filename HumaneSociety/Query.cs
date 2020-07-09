@@ -475,9 +475,8 @@ namespace HumaneSociety
             Animal animalFromDb = db.Animals.Where(c => c.AnimalId == animalId).Single();
            
             animalFromDb.AdoptionStatus = "Not Adopted";
-            adoptionFromDb.PaymentCollected = false;
+            adoptionFromDb.PaymentCollected = true;
             adoptionFromDb.ApprovalStatus = "Not approved";
-            
             db.SubmitChanges();
         }
 
@@ -500,9 +499,23 @@ namespace HumaneSociety
             return listOfShots;
         }
 
-        internal static void UpdateShot(string shotName, Animal animal)
+        internal static void UpdateShot(string shotName, Animal animal) 
         {
-            throw new NotImplementedException();
+            Shot shotToUpdate = null;
+            var animalshot = db.AnimalShots.Where(a => a.Shot.Name == shotName);
+
+            try
+            {
+                shotToUpdate = db.Shots.Where(c => c.Name == shotName).Single();
+            }
+            catch (InvalidOperationException e)
+            {
+                UserInterface.DisplayMessage("No record of this particular shot can be found.");
+                UserInterface.DisplayMessage("No updates have been made.");
+                return;
+            }
+
+            
         }
     }
 }

@@ -1,0 +1,40 @@
+INSERT INTO Categories VALUES('Cats');
+INSERT INTO Categories VALUES('Dogs');
+INSERT INTO Categories VALUES('Birds');
+INSERT INTO Categories VALUES('Reptiles');
+INSERT INTO Categories VALUES('Ferrets');
+
+INSERT INTO DietPlans VALUES('Cat Diet Plan','Meow Mix',1);
+INSERT INTO DietPlans VALUES('Dog Diet Plan','Dog Kibbles',2);
+INSERT INTO DietPlans VALUES('Bird Diet Plan','White Millet',1);
+INSERT INTO DietPlans VALUES('Reptile Diet Plan','Monkey Chow',1);
+INSERT INTO DietPlans VALUES('Ferret Diet Plan','Ferret Kibble',1);
+
+INSERT INTO Animals VALUES('Boots',15,2,'peppy',1,0,'male','not adopted',null,null,null);
+INSERT INTO Animals VALUES('Guy Fieri',9,5,'zesty',1,1,'male','not adopted',null,null,null);
+INSERT INTO Animals VALUES('Punchy',50,9,'sweet',0,1,'female','not adopted',null,null,null);
+INSERT INTO Animals VALUES('Joe Exotic',60,6,'fiesty',0,0,'male','not adopted',null,null,null);
+INSERT INTO Animals VALUES('Noodle',30,2,'reserved',1,1,'male','not adopted',null,null,null);
+
+INSERT INTO Rooms VALUES(1,null);
+INSERT INTO Rooms VALUES(2,null);
+INSERT INTO Rooms VALUES(3,null);
+INSERT INTO Rooms VALUES(4,null);
+INSERT INTO Rooms VALUES(5,null);
+INSERT INTO Rooms VALUES(6,null);
+INSERT INTO Rooms VALUES(7,null);
+INSERT INTO Rooms VALUES(8,null);
+INSERT INTO Rooms VALUES(9,null);
+INSERT INTO Rooms VALUES(10,null);
+
+INSERT INTO Clients VALUES('Linda','Belcher','burgerfits','BurgerTime', null,'LindaBelcher@burgertime.com');
+INSERT INTO Clients VALUES('Barry','Benson','beemovietwowhen','BeesRock',null,'BeesRock@bees.com');
+INSERT INTO Clients VALUES('Jack','Daniels','JacknCoke','doubleshot',null,'jackdaniels@gmail.com');
+INSERT INTO Clients VALUES('Timmy','Turner','BuckTeethTwerp','CosmoWanda',null,'fairlyoddparents@nick.com');
+INSERT INTO Clients VALUES('Steven','Universe','MrUniverse','rosequartz',null,'crystalgems@gmail.com');
+
+INSERT INTO Employees VALUES('Guy','Fieri','WelcomeToFlavortown','FlAvOrToWn',1,'guysgrocerygames@guy.com');
+INSERT INTO Employees VALUES('Bob','Belcher','BobsBurgers','thisIsMyPassword',2,'bobsburgers@burgertime.net');
+INSERT INTO Employees VALUES('Elon','Musk','ItalianElonMusk','lolteslas',3,'weregoingtospace@gmail.com');
+INSERT INTO Employees VALUES('Ash','Ketchum','Catchemall','pikachuuuu',4,'kantosthebest@gmail.com');
+INSERT INTO Employees VALUES('Cardi','B','skrtskrt','password',5,'bcardi@cardib.org');
