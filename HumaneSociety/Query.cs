@@ -501,12 +501,11 @@ namespace HumaneSociety
 
         internal static void UpdateShot(string shotName, Animal animal) 
         {
-            Shot shotToUpdate = null;
-            var animalshot = db.AnimalShots.Where(a => a.Shot.Name == shotName);
-
+            Shot thisShot = null;
+            Animal animalWithShot = null;
             try
             {
-                shotToUpdate = db.Shots.Where(c => c.Name == shotName).Single();
+                thisShot = db.Shots.Where(c => c.Name == shotName).Single();
             }
             catch (InvalidOperationException e)
             {
@@ -514,8 +513,24 @@ namespace HumaneSociety
                 UserInterface.DisplayMessage("No updates have been made.");
                 return;
             }
+            try
+            {
+                animalWithShot = db.Animals.Where(a => a.AnimalId == animal.AnimalId).Single();
+            }
+            catch (InvalidOperationException e)
+            {
+                UserInterface.DisplayMessage("No record of this animal can be found.");
+                UserInterface.DisplayMessage("No updates have been made.");
+                return;
+            }
+            AnimalShot shotToAdd = new AnimalShot();
+            shotToAdd.AnimalId = animalWithShot.AnimalId;
+            shotToAdd.ShotId = thisShot.ShotId;
+            shotToAdd.DateReceived = DateTime.Today;
 
-            
+            db.AnimalShots.InsertOnSubmit(shotToAdd);
+            db.SubmitChanges();
+
         }
     }
 }
