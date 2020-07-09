@@ -368,13 +368,40 @@ namespace HumaneSociety
         // TODO: Adoption CRUD Operations
         internal static void Adopt(Animal animal, Client client)
         {
-            //Creation of Adoption (linking AnimalId and ClientId).  Will set AdoptionStatus to Pending, PaymentCollect to FALSE, Can hard code PaymentFee
-            Adoption animalAdoption = db.Adoptions.Where(a => a.AnimalId == animal.AnimalId && a.ClientId == client.ClientId).FirstOrDefault();
-            
-            
+            Animal animalFromDb = null;
+            Client clientFromDb = null;
 
-            Animal animalFromDB = db.Animals.Where(b => b.AnimalId == animal.AnimalId).FirstOrDefault();
-            animalFromDB.AdoptionStatus = "Pending";
+            try
+            {
+                animalFromDb = db.Animals.Where(c => c.AnimalId == animal.AnimalId).Single();
+            }
+            catch (InvalidOperationException e)
+            {
+                UserInterface.DisplayMessage("No animals have an AnimalId that matches the ID passed in.");
+                UserInterface.DisplayMessage("No updates have been made.");
+                return;
+            }
+            try
+            {
+                clientFromDb = db.Clients.Where(c => c.ClientId == client.ClientId).Single();
+            }
+            catch (InvalidOperationException e)
+            {
+                UserInterface.DisplayMessage("No clients have a client ID that matches the ID passed in.");
+                UserInterface.DisplayMessage("No updates have been made.");
+                return;
+            }
+
+            Adoption animalAdoption = new Adoption();
+            animalAdoption.AnimalId = animalFromDb.AnimalId;
+            animalAdoption.ClientId = clientFromDb.ClientId;
+            animalAdoption.ApprovalStatus = "Approved";
+            animalAdoption.AdoptionFee = 100;
+            animalAdoption.PaymentCollected = false;    
+
+            animalFromDb.AdoptionStatus = "Pending";
+
+            db.Adoptions.InsertOnSubmit(animalAdoption);
             db.SubmitChanges();
         }
 
@@ -420,26 +447,20 @@ namespace HumaneSociety
                 UserInterface.DisplayMessage("No updates have been made.");
                 return;
             }
-            //If isAdopted --> payment has been collected, adoption is approved, adoption status = "Adopted"
-            //Otherwise we can mark as not adopted (will keep record of this adoption in DB)
             if (isAdopted)
             {
                 animalFromDb.AdoptionStatus = "Adopted";
-                //Will need to change AdoptionStatus at that animal to Adopted
             }
 
             else
             {
                 animalFromDb.AdoptionStatus = "Not Adopted";
-                //Will need to change AdoptionStatus to NotAdopted
             }
             db.SubmitChanges();
         }
 
         internal static void RemoveAdoption(int animalId, int clientId)
-        {
-            //Will change Animal.Adoption Status to notadopted
-           
+        {           
             Adoption adoptionToRemove = null;
             try
             {
@@ -482,10 +503,8 @@ namespace HumaneSociety
                 UserInterface.DisplayMessage("No updates have been made.");
                 return null;
             }
-
             var listOfShots = db.AnimalShots.Where(s => s.AnimalId == animalFromDb.AnimalId);
             return listOfShots;
-
         }
 
         internal static void UpdateShot(string shotName, Animal animal)
