@@ -81,7 +81,7 @@ namespace HumaneSociety
             {
                 clientFromDb = db.Clients.Where(c => c.ClientId == clientWithUpdates.ClientId).Single();
             }
-            catch(InvalidOperationException e)
+            catch(InvalidOperationException)
             {
                 UserInterface.DisplayMessage("No clients have a ClientId that matches the Client passed in.");
                 UserInterface.DisplayMessage("No update have been made.");
@@ -196,7 +196,6 @@ namespace HumaneSociety
         //Create employee
         internal static void AddEmployee(Employee employee)
         {
-            //Copied from Client update - let's double check this!
             db.Employees.InsertOnSubmit(employee);
             db.SubmitChanges();
         }
@@ -215,14 +214,13 @@ namespace HumaneSociety
             {
                 employeeFromDb = db.Employees.Where(c => c.EmployeeId == employee.EmployeeId).Single();
             }
-            catch (InvalidOperationException e)
+            catch (InvalidOperationException)
             {
                 UserInterface.DisplayMessage("No employees have an EmployeeId that matches the Employee passed in.");
                 UserInterface.DisplayMessage("No update have been made.");
                 return;
             }
 
-            // update clientFromDb information with the values on clientWithUpdates (aside from address)
             employeeFromDb.FirstName = employee.FirstName;
             employeeFromDb.LastName = employee.LastName;
             employeeFromDb.UserName = employee.UserName;
@@ -251,34 +249,65 @@ namespace HumaneSociety
             return animalByID;  
         }
 
-        internal static void UpdateAnimal(Animal updatedAnimal)
+        internal static void UpdateAnimal(int animalID,Dictionary<int,string> updates)
         {
             Animal animalFromDb = null;
+            var allCategories = db.Categories;
 
             try
             {
-                animalFromDb = db.Animals.Where(c => c.AnimalId == updatedAnimal.AnimalId).Single();
+                animalFromDb = db.Animals.Where(c => c.AnimalId == animalID).Single();
             }
-            catch (InvalidOperationException e)
+            catch (InvalidOperationException)
             {
                 UserInterface.DisplayMessage("No animals have an AnimalId that matches the ID passed in.");
                 UserInterface.DisplayMessage("No updates have been made.");
                 return;
             }
+            foreach (var item in updates)
+            {
+                switch (item.Key)
+                {
+                    case 1: //Category
+                        Category updatedCategory = allCategories.Where(a => a.Name == item.Value).FirstOrDefault();
+                        animalFromDb.Category = updatedCategory;
+                        break;
 
-            animalFromDb.Name = updatedAnimal.Name;
-            animalFromDb.Weight = updatedAnimal.Weight;
-            animalFromDb.Age = updatedAnimal.Age;
-            animalFromDb.Demeanor = updatedAnimal.Demeanor;
-            animalFromDb.KidFriendly = updatedAnimal.KidFriendly;
-            animalFromDb.PetFriendly = updatedAnimal.PetFriendly;
-            animalFromDb.Gender = updatedAnimal.Gender;
-            animalFromDb.AdoptionStatus = updatedAnimal.AdoptionStatus;
-            animalFromDb.CategoryId = updatedAnimal.CategoryId;
-            animalFromDb.DietPlanId = updatedAnimal.DietPlanId;
-            animalFromDb.EmployeeId = updatedAnimal.EmployeeId;
+                    case 2: //Name
+                        animalFromDb.Name = item.Value;
+                        break;
 
-            db.SubmitChanges();
+                    case 3: //Age
+                        int ageInInt = Int32.Parse(item.Value);
+                        animalFromDb.Age = ageInInt;
+                        break;
+
+                    case 4: //Demeanor
+                        animalFromDb.Demeanor = item.Value;
+                        break;
+
+                    case 5: //Kid Friendly
+                        bool kidFriendly = UserInterface.YesNoToBool(item.Value);
+                        animalFromDb.KidFriendly = kidFriendly;
+                        break;
+
+                    case 6: //Pet Friendly
+                        bool petFriendly = UserInterface.YesNoToBool(item.Value);
+                        animalFromDb.PetFriendly = petFriendly;
+                        break;
+
+                    case 7: //Weight
+                        int weightInInt = Int32.Parse(item.Value);
+                        animalFromDb.Weight = weightInInt;
+                        break;
+
+                    default:
+                        UserInterface.DisplayMessage("Improper parameters passed in.");
+                        UserInterface.DisplayMessage("Update was unsuccessful. Please try your updates again");
+                        break;
+                }
+                db.SubmitChanges();
+            }
         }
 
         internal static void RemoveAnimal(Animal animal)
@@ -289,7 +318,6 @@ namespace HumaneSociety
         
         // TODO: Animal Multi-Trait Search
             
-            //Clarification on this method?
         internal static IQueryable<Animal> SearchForAnimalsByMultipleTraits(Dictionary<int, string> searchCriteria) // parameter(s)? **FOLLOW UP W/ SENIOR DEV ABOUT THIS ONE**
         {
             var allAnimals = db.Animals;
@@ -370,12 +398,11 @@ namespace HumaneSociety
         {
             Animal animalFromDb = null;
             Client clientFromDb = null;
-
             try
             {
                 animalFromDb = db.Animals.Where(c => c.AnimalId == animal.AnimalId).Single();
             }
-            catch (InvalidOperationException e)
+            catch (InvalidOperationException)
             {
                 UserInterface.DisplayMessage("No animals have an AnimalId that matches the ID passed in.");
                 UserInterface.DisplayMessage("No updates have been made.");
@@ -385,7 +412,7 @@ namespace HumaneSociety
             {
                 clientFromDb = db.Clients.Where(c => c.ClientId == client.ClientId).Single();
             }
-            catch (InvalidOperationException e)
+            catch (InvalidOperationException)
             {
                 UserInterface.DisplayMessage("No clients have a client ID that matches the ID passed in.");
                 UserInterface.DisplayMessage("No updates have been made.");
@@ -395,88 +422,66 @@ namespace HumaneSociety
             Adoption animalAdoption = new Adoption();
             animalAdoption.AnimalId = animalFromDb.AnimalId;
             animalAdoption.ClientId = clientFromDb.ClientId;
-            animalAdoption.ApprovalStatus = "Approved";
+            animalAdoption.ApprovalStatus = "Pending";
             animalAdoption.AdoptionFee = 100;
-            animalAdoption.PaymentCollected = false;    
-
-            animalFromDb.AdoptionStatus = "Pending";
+            animalAdoption.PaymentCollected = true;    
 
             db.Adoptions.InsertOnSubmit(animalAdoption);
             db.SubmitChanges();
         }
 
-        internal static IQueryable<Adoption> GetPendingAdoptions()  //Instead of yield return, we will create a list of Adoptions where = "Pending", then return this list
+        internal static IQueryable<Adoption> GetPendingAdoptions()  
         {
-            var animalsPendingAdoption = db.Animals.Where(p => p.AdoptionStatus == "Pending").Select(a => a.AnimalId);
-            var listOfAdoptions = db.Adoptions;
-            var finalList;
-            //We now have a collection of all adoptions, and a collection of the ID's we need to pull from
-            //Can we join animalId's with list of adoptions, then simply select just "Adoptions" fromt that collection?
-
-            foreach (var animalID in animalsPendingAdoption)
-            {
-                finalList.Add(listOfAdoptions.Where(a => a.AnimalId == animalID));
-            }
-           
-            return finalList;
-                                                                                                                                       //START HERE THURSDAY
+            var animalsPendingAdoption = db.Adoptions.Where(p => p.ApprovalStatus == "Pending");
+            
+            return animalsPendingAdoption;
         }
 
         internal static void UpdateAdoption(bool isAdopted, Adoption adoption)
         {
             //Search DB for this particular adoption
             Adoption adoptionFromDb = null;
-            Animal animalFromDb = null;
             try
             {
                 adoptionFromDb = db.Adoptions.Where(c => c.AnimalId == adoption.AnimalId).Single();
             }
-            catch (InvalidOperationException e)
+            catch (InvalidOperationException)
             {
                 UserInterface.DisplayMessage("No adoption matches the ID passed in.");
                 UserInterface.DisplayMessage("No updates have been made.");
                 return;
             }
-            try
-            {
-                animalFromDb = db.Animals.Where(c => c.AnimalId == adoption.AnimalId).Single();
-            }
-            catch (InvalidOperationException e)
-            {
-                UserInterface.DisplayMessage("No animals have an AnimalId that matches the ID passed in.");
-                UserInterface.DisplayMessage("No updates have been made.");
-                return;
-            }
+            Animal animalFromDb = db.Animals.Where(c => c.AnimalId == adoption.AnimalId).Single();
             if (isAdopted)
             {
                 animalFromDb.AdoptionStatus = "Adopted";
+                adoptionFromDb.ApprovalStatus = "Approved";
             }
-
             else
             {
                 animalFromDb.AdoptionStatus = "Not Adopted";
+                adoptionFromDb.ApprovalStatus = "Not Approved";
             }
             db.SubmitChanges();
         }
 
-        internal static void RemoveAdoption(int animalId, int clientId)
+        internal static void RemoveAdoption(int animalId, int clientId)         //FOLLOW UP WITH DAVID
         {           
             Adoption adoptionFromDb = null;
             try
             {
                 adoptionFromDb = db.Adoptions.Where(c => c.AnimalId == animalId && c.ClientId == clientId).Single();
             }
-            catch (InvalidOperationException e)
+            catch (InvalidOperationException)
             {
                 UserInterface.DisplayMessage("No record of adoption matches the values passed in.");
                 UserInterface.DisplayMessage("No updates have been made.");
                 return;
             }
-            Animal animalFromDb = db.Animals.Where(c => c.AnimalId == animalId).Single();
            
-            animalFromDb.AdoptionStatus = "Not Adopted";
-            adoptionFromDb.PaymentCollected = true;
+            adoptionFromDb.PaymentCollected = false;
             adoptionFromDb.ApprovalStatus = "Not approved";
+
             db.SubmitChanges();
         }
 
@@ -489,12 +494,13 @@ namespace HumaneSociety
             {
                 animalFromDb = db.Animals.Where(c => c.AnimalId == animal.AnimalId).Single();
             }
-            catch (InvalidOperationException e)
+            catch (InvalidOperationException)
             {
                 UserInterface.DisplayMessage("No animals have an AnimalId that matches the ID passed in.");
                 UserInterface.DisplayMessage("No updates have been made.");
                 return null;
             }
+
             var listOfShots = db.AnimalShots.Where(s => s.AnimalId == animalFromDb.AnimalId);
             return listOfShots;
         }
@@ -507,7 +513,7 @@ namespace HumaneSociety
             {
                 thisShot = db.Shots.Where(c => c.Name == shotName).Single();
             }
-            catch (InvalidOperationException e)
+            catch (InvalidOperationException)
             {
                 UserInterface.DisplayMessage("No record of this particular shot can be found.");
                 UserInterface.DisplayMessage("No updates have been made.");
@@ -517,7 +523,7 @@ namespace HumaneSociety
             {
                 animalWithShot = db.Animals.Where(a => a.AnimalId == animal.AnimalId).Single();
             }
-            catch (InvalidOperationException e)
+            catch (InvalidOperationException)
             {
                 UserInterface.DisplayMessage("No record of this animal can be found.");
                 UserInterface.DisplayMessage("No updates have been made.");
