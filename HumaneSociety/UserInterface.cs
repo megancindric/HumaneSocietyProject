@@ -157,7 +157,7 @@ namespace HumaneSociety
 
         public static bool YesNoToBool(string input)
         {
-            if(input == "yes")
+            if(input == "yes" || input == "Yes")
             {
                 return true;
             }

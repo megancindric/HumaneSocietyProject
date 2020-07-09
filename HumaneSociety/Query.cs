@@ -187,7 +187,7 @@ namespace HumaneSociety
                     break;
 
                 default:
-                    UserInterface.DisplayMessage("Not a valid query operation.  Please try your query again");
+                    UserInterface.DisplayMessage("Not a valid selection.  Please try again");
                     break;
             }
              
@@ -212,7 +212,7 @@ namespace HumaneSociety
 
             try
             {
-                employeeFromDb = db.Employees.Where(c => c.EmployeeId == employee.EmployeeId).Single();
+                employeeFromDb = db.Employees.Where(c => c.EmployeeId == employee.EmployeeId).FirstOrDefault();
             }
             catch (InvalidOperationException)
             {
@@ -256,7 +256,7 @@ namespace HumaneSociety
 
             try
             {
-                animalFromDb = db.Animals.Where(c => c.AnimalId == animalID).Single();
+                animalFromDb = db.Animals.Where(c => c.AnimalId == animalID).FirstOrDefault();
             }
             catch (InvalidOperationException)
             {
@@ -318,50 +318,49 @@ namespace HumaneSociety
         
         // TODO: Animal Multi-Trait Search
             
-        internal static IQueryable<Animal> SearchForAnimalsByMultipleTraits(Dictionary<int, string> searchCriteria) // parameter(s)? **FOLLOW UP W/ SENIOR DEV ABOUT THIS ONE**
+        internal static IQueryable<Animal> SearchForAnimalsByMultipleTraits(Dictionary<int, string> searchCriteria)
         {
-            var allAnimals = db.Animals;
-           
-            //Grab all animals from DB & store in var
+            IQueryable<Animal> allAnimals = db.Animals;
+
             foreach (var item in searchCriteria)
             {
                 switch(item.Key)
                 {
                     case 1: //Category
-                      allAnimals.Where(c => c.Category.Name == item.Value).FirstOrDefault();
+                      allAnimals = allAnimals.Where(c => c.Category.Name == item.Value);
                       break;
 
                     case 2: //Name
-                       allAnimals.Where(c => c.Name == item.Value).FirstOrDefault();
+                      allAnimals = allAnimals.Where(c => c.Name == item.Value);
                        break;
 
                     case 3: //Age
                         int ageInInt = Int32.Parse(item.Value);
-                        allAnimals.Where(c => c.Age == ageInInt).FirstOrDefault();
+                       allAnimals = allAnimals = allAnimals.Where(c => c.Age == ageInInt);
                         break;
 
                     case 4: //Demeanor
-                        allAnimals.Where(c => c.Demeanor == item.Value).FirstOrDefault();
+                        allAnimals = allAnimals.Where(c => c.Demeanor == item.Value);
                         break;
 
                     case 5: //Kid Friendly
                         bool kidFriendly = UserInterface.YesNoToBool(item.Value);
-                        allAnimals.Where(c => c.KidFriendly == kidFriendly).FirstOrDefault();
+                        allAnimals = allAnimals.Where(c => c.KidFriendly == kidFriendly);
                         break;
 
                     case 6: //Pet Friendly
                         bool petFriendly = UserInterface.YesNoToBool(item.Value);
-                        allAnimals.Where(c => c.PetFriendly == petFriendly).FirstOrDefault();
+                        allAnimals = allAnimals.Where(c => c.PetFriendly == petFriendly);
                         break;
 
                     case 7: //Weight
                         int weightInInt = Int32.Parse(item.Value);
-                        allAnimals.Where(c => c.Weight == weightInInt).FirstOrDefault();
+                        allAnimals = allAnimals.Where(c => c.Weight == weightInInt);
                         break;
 
                     case 8: //ID
                         int idInInt = Int32.Parse(item.Value);
-                        allAnimals.Where(c => c.AnimalId == idInInt).FirstOrDefault();
+                        allAnimals = allAnimals.Where(c => c.AnimalId == idInInt);
                         break;
 
                     default:
@@ -419,12 +418,14 @@ namespace HumaneSociety
                 return;
             }
 
-            Adoption animalAdoption = new Adoption();
-            animalAdoption.AnimalId = animalFromDb.AnimalId;
-            animalAdoption.ClientId = clientFromDb.ClientId;
-            animalAdoption.ApprovalStatus = "Pending";
-            animalAdoption.AdoptionFee = 100;
-            animalAdoption.PaymentCollected = true;    
+            Adoption animalAdoption = new Adoption
+            {
+                AnimalId = animalFromDb.AnimalId,
+                ClientId = clientFromDb.ClientId,
+                ApprovalStatus = "Pending",
+                AdoptionFee = 100,
+                PaymentCollected = true
+            };
 
             db.Adoptions.InsertOnSubmit(animalAdoption);
             db.SubmitChanges();
@@ -454,34 +455,25 @@ namespace HumaneSociety
             Animal animalFromDb = db.Animals.Where(c => c.AnimalId == adoption.AnimalId).Single();
             if (isAdopted)
             {
-                animalFromDb.AdoptionStatus = "Adopted";
-                adoptionFromDb.ApprovalStatus = "Approved";
+                ApproveAdoption(adoptionFromDb, animalFromDb);
             }
             else
             {
-                animalFromDb.AdoptionStatus = "Not Adopted";
-                adoptionFromDb.ApprovalStatus = "Not Approved";
+                RemoveAdoption(adoptionFromDb);
             }
             db.SubmitChanges();
         }
-
-        internal static void RemoveAdoption(int animalId, int clientId)         //FOLLOW UP WITH DAVID
-        {           
-            Adoption adoptionFromDb = null;
-            try
-            {
-                adoptionFromDb = db.Adoptions.Where(c => c.AnimalId == animalId && c.ClientId == clientId).Single();
-            }
-            catch (InvalidOperationException)
-            {
-                UserInterface.DisplayMessage("No record of adoption matches the values passed in.");
-                UserInterface.DisplayMessage("No updates have been made.");
-                return;
-            }
-           
-            adoptionFromDb.PaymentCollected = false;
-            adoptionFromDb.ApprovalStatus = "Not approved";
-
+        internal static void ApproveAdoption(Adoption adoption, Animal animal)
+        {
+            
+            adoption.ApprovalStatus = "approved";
+            animal.AdoptionStatus = "Adopted";
+            db.SubmitChanges();
+        }
+        internal static void RemoveAdoption(Adoption adoption)
+        {
+            adoption.PaymentCollected = false;
+            adoption.ApprovalStatus = "Not approved";
             db.SubmitChanges();
         }
 
@@ -489,7 +481,6 @@ namespace HumaneSociety
         internal static IQueryable<AnimalShot> GetShots(Animal animal)
         {
             Animal animalFromDb = null;
-
             try
             {
                 animalFromDb = db.Animals.Where(c => c.AnimalId == animal.AnimalId).Single();
@@ -529,10 +520,12 @@ namespace HumaneSociety
                 UserInterface.DisplayMessage("No updates have been made.");
                 return;
             }
-            AnimalShot shotToAdd = new AnimalShot();
-            shotToAdd.AnimalId = animalWithShot.AnimalId;
-            shotToAdd.ShotId = thisShot.ShotId;
-            shotToAdd.DateReceived = DateTime.Today;
+            AnimalShot shotToAdd = new AnimalShot
+            {
+                AnimalId = animalWithShot.AnimalId,
+                ShotId = thisShot.ShotId,
+                DateReceived = DateTime.Today
+            };
 
             db.AnimalShots.InsertOnSubmit(shotToAdd);
             db.SubmitChanges();
